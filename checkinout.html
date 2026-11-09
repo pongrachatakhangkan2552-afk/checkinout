@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e6b52">
+  <title>สมุดขาย</title>
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap">
+  <style>
+    :root {
+      --paper: #f3eee6;
+      --desk: #e6dfd2;
+      --card: #fffdf9;
+      --ink: #1c1915;
+      --muted: #6f675e;
+      --line: #e3d9cc;
+      --brand: #0e6b52;
+      --brand-press: #0b5642;
+      --brand-ink: #f3fbf7;
+      --brand-soft: #e5f4ee;
+      --cash: #b4532a;
+      --cash-soft: #f8ebe3;
+      font-family: "Sarabun", ui-sans-serif, system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--desk);
+      color-scheme: light;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body { touch-action: manipulation; }
+    button, [role="button"] { cursor: pointer; font: inherit; }
+    button:disabled { opacity: 0.4; cursor: default; }
+    h1, h2 { text-wrap: balance; line-height: 1.25; margin: 0; }
+    p { text-wrap: pretty; }
+    .app { width: min(100%, 32rem); min-height: 100dvh; margin: 0 auto; background: var(--paper); display: flex; flex-direction: column; }
+    header { position: sticky; top: 0; z-index: 20; background: var(--brand); color: var(--brand-ink); padding: max(1rem, env(safe-area-inset-top)) 1.25rem 1rem; }
+    header p { margin: 0; font-size: 0.875rem; font-weight: 600; }
+    main { flex: 1; padding: 1rem 1rem 7rem; }
+    nav {
+      position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
+      width: min(100%, 32rem); z-index: 30; display: grid; grid-template-columns: 1fr 1fr;
+      background: var(--card); border-top: 1px solid var(--line);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    nav button { height: 4rem; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.15rem; font-weight: 600; font-size: 0.875rem; color: var(--muted); transition: color .2s ease; }
+    nav button[aria-current="page"] { color: var(--brand); }
+    .btn { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; height: 3.5rem; border-radius: 1rem; border: 0; font-size: 1.125rem; font-weight: 600; transition: background-color .2s ease, transform .2s ease, opacity .2s ease; }
+    .btn-primary { background: var(--brand); color: var(--brand-ink); }
+    .btn-primary:active:not(:disabled) { background: var(--brand-press); }
+    .btn:active:not(:disabled), .choice:active, .sale:active { transform: scale(0.985); }
+    .btn-line { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 1rem; overflow: hidden; }
+    .stat { background: var(--card); padding: 0.75rem 1rem; }
+    .stat span { display: block; color: var(--muted); font-size: 0.875rem; }
+    .stat strong { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+    .muted { color: var(--muted); }
+    .kicker { color: var(--brand); font-size: 0.875rem; font-weight: 600; margin: 0; }
+    .back { border: 0; background: transparent; color: var(--brand); font-weight: 600; padding: 0; margin-bottom: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 1rem; padding: 1rem; }
+    .choice { width: 100%; display: flex; gap: 0.75rem; align-items: center; text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 1rem; padding: 1rem; margin-bottom: 0.75rem; transition: transform .2s ease, background-color .2s ease; }
+    .preview, .empty-photo { animation: fade-in .28s ease; }
+    .ico { width: 3rem; height: 3rem; border-radius: 0.75rem; display: grid; place-items: center; flex: none; }
+    .ico.cash { background: var(--cash-soft); color: var(--cash); }
+    .ico.brand { background: var(--brand-soft); color: var(--brand); }
+    .preview { width: 100%; aspect-ratio: 4/3; object-fit: contain; background: var(--desk); border: 1px solid var(--line); border-radius: 1rem; margin-bottom: 1rem; }
+    .empty-photo { aspect-ratio: 4/3; border: 1px dashed var(--line); border-radius: 1rem; display: grid; place-items: center; text-align: center; color: var(--muted); background: var(--card); margin-bottom: 1rem; padding: 1rem; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .amount { width: 100%; border: 0; background: transparent; text-align: center; font-size: 3rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); outline: none; }
+    .warn { background: var(--cash-soft); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
+    .warn button, .link { border: 0; background: transparent; color: var(--cash); font-weight: 600; padding: 0; }
+    .link.brand { color: var(--brand); }
+    label.field { display: block; }
+    label.field input, .field input { width: 100%; border: 0; background: transparent; font: inherit; font-size: 1.125rem; font-weight: 600; outline: none; color: var(--ink); }
+    .datebar { display: flex; align-items: center; gap: 0.5rem; }
+    .round { width: 2.75rem; height: 2.75rem; border-radius: 999px; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; flex: none; }
+    .round.brand { background: var(--brand); color: var(--brand-ink); border: 0; position: relative; }
+    .round.brand input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 1rem; }
+    .datebar h2 { font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sale { width: 100%; display: flex; gap: 0.75rem; text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 1rem; padding: 0.75rem; margin-bottom: 0.75rem; transition: transform .2s ease; }
+    .sale img { width: 4rem; height: 4rem; object-fit: cover; border-radius: 0.75rem; background: var(--desk); flex: none; }
+    .sheet { position: fixed; inset: 0; z-index: 40; background: rgba(28,25,21,0.4); display: flex; justify-content: center; }
+    .sheet .panel { width: min(100%, 32rem); height: 100%; background: var(--paper); display: flex; flex-direction: column; }
+    .sheet .bar { display: flex; align-items: center; gap: 0.75rem; padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0.75rem; border-bottom: 1px solid var(--line); }
+    .sheet .body { overflow: auto; padding: 1rem 1rem 2rem; }
+    .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(28,25,21,0.4); display: grid; place-items: center; padding: 1.5rem; }
+    .overlay .card { width: min(100%, 24rem); text-align: center; }
+    pre { white-space: pre-wrap; word-break: break-word; background: var(--desk); border-radius: 1rem; padding: 0.75rem; font-size: 0.75rem; }
+    .err { color: var(--cash); font-weight: 600; font-size: 0.875rem; }
+    .center { text-align: center; }
+    .check { width: 5rem; height: 5rem; border-radius: 999px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; margin: 0 auto; }
+    main.fade { animation: fade-in .28s ease; }
+    main.fade .sheet, main.fade .overlay { animation: fade-in .22s ease; }
+    main.fade .sheet .panel, main.fade .overlay .card { animation: rise-in .28s ease; }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes rise-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      main.fade, main.fade .sheet, main.fade .overlay, main.fade .sheet .panel, main.fade .overlay .card, .preview, .empty-photo { animation: none; }
+      .btn, .choice, .sale, nav button { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBnNbAYrnrR6ahrDJCm6-8Reroxlo683rw",
+      authDomain: "checkinout-a06b6.firebaseapp.com",
+      projectId: "checkinout-a06b6",
+      storageBucket: "checkinout-a06b6.firebasestorage.app",
+      messagingSenderId: "965302145973",
+      appId: "1:965302145973:web:7954e6e9e7bf86070fbffc",
+      measurementId: "G-T3H9W4ZR3Y"
+    };
+    const FIRESTORE_RULES = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /sales/{id} { allow read, write: if true; }
+    match /saleMedia/{id} { allow read, write: if true; }
+  }
+}`;
+    const PAY = { cash: "เงินสด", scan: "สแกน", project: "สแกนโครงการ" };
+    const app = document.getElementById("app");
+    let db = null;
+    let saveRun = 0;
+    let unsubToday = null;
+    let unsubDay = null;
+
+    const state = {
+      tab: "sell",
+      step: "home",
+      todayRows: [],
+      todayError: "",
+      dateKey: todayKey(),
+      dayRows: [],
+      dayError: "",
+      dayReady: false,
+      product: null,
+      productUrl: "",
+      slip: null,
+      slipUrl: "",
+      method: null,
+      amount: "",
+      busyPhoto: false,
+      photoError: "",
+      status: "",
+      saveError: "",
+      saved: null,
+      help: false,
+      openId: null,
+      pdfStatus: "",
+      pdfError: "",
+      media: {},
+      label: "",
+      guess: "อุปกรณ์นี้",
+      deviceShort: ""
+    };
+
+    function todayKey(date = new Date()) {
+      return parts(date).dateKey;
+    }
+    function parts(date = new Date()) {
+      const fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Bangkok",
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hourCycle: "h23"
+      });
+      const bag = {};
+      for (const p of fmt.formatToParts(date)) bag[p.type] = p.value;
+      const hour = bag.hour === "24" ? "00" : bag.hour;
+      return { dateKey: bag.year + "-" + bag.month + "-" + bag.day, timeLabel: hour + ":" + bag.minute + ":" + bag.second };
+    }
+    function addDays(key, days) {
+      const [y, m, d] = key.split("-").map(Number);
+      const utc = new Date(Date.UTC(y, m - 1, d + days));
+      const mm = String(utc.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(utc.getUTCDate()).padStart(2, "0");
+      return utc.getUTCFullYear() + "-" + mm + "-" + dd;
+    }
+    function thaiDate(key) {
+      const [y, m, d] = key.split("-").map(Number);
+      return new Intl.DateTimeFormat("th-TH", {
+        timeZone: "Asia/Bangkok", weekday: "long", day: "numeric", month: "long", year: "numeric"
+      }).format(new Date(Date.UTC(y, m - 1, d, 5, 0, 0)));
+    }
+    function thaiDateTime(iso) {
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return iso;
+      return new Intl.DateTimeFormat("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "long", timeStyle: "medium" }).format(date);
+    }
+    function baht(n) {
+      return new Intl.NumberFormat("th-TH", {
+        style: "currency", currency: "THB",
+        minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+        maximumFractionDigits: 2
+      }).format(n);
+    }
+    function parseAmount(raw) {
+      const cleaned = String(raw).replace(/[฿,\s]/g, "").replace(/บาท/g, "");
+      if (!/^\d+(\.\d{0,2})?$/.test(cleaned)) return null;
+      const value = Number(cleaned);
+      if (!Number.isFinite(value) || value <= 0 || value > 10000000) return null;
+      return Math.round(value * 100) / 100;
+    }
+    function esc(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (ch) => {
+        if (ch === "&") return "&" + "amp;";
+        if (ch === "<") return "&" + "lt;";
+        if (ch === ">") return "&" + "gt;";
+        if (ch === '"') return "&" + "quot;";
+        return "&" + "#39;";
+      });
+    }
+    function summarize(rows) {
+      let cash = 0, scan = 0, project = 0;
+      for (const row of rows) {
+        if (row.paymentMethod === "cash") cash += row.amount || 0;
+        else if (row.paymentMethod === "scan") scan += 1;
+        else project += 1;
+      }
+      return { count: rows.length, cash, scan, project };
+    }
+    function guessDevice() {
+      const ua = navigator.userAgent;
+      if (/iPhone/.test(ua)) return "iPhone";
+      if (/iPad/.test(ua)) return "iPad";
+      if (/Android/.test(ua)) {
+        const match = ua.match(/;\s*([^;)]+)\s+Build\//);
+        return (match && match[1].trim()) || "Android";
+      }
+      if (/Windows/.test(ua)) return "คอมพิวเตอร์ Windows";
+      if (/Mac OS X/.test(ua)) return "Mac";
+      return "อุปกรณ์นี้";
+    }
+    function readProfile() {
+      try {
+        const raw = localStorage.getItem("somudkhai-device-v1");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.id) return { id: parsed.id, label: parsed.label || "" };
+        }
+      } catch (e) { /* ignore */ }
+      const created = { id: crypto.randomUUID(), label: "" };
+      localStorage.setItem("somudkhai-device-v1", JSON.stringify(created));
+      return created;
+    }
+    function writeLabel(label) {
+      const profile = readProfile();
+      localStorage.setItem("somudkhai-device-v1", JSON.stringify({ id: profile.id, label: label.trim().slice(0, 40) }));
+    }
+    function deviceInfo() {
+      const profile = readProfile();
+      return {
+        deviceId: profile.id,
+        label: profile.label.trim() || guessDevice(),
+        userAgent: navigator.userAgent,
+        platform: navigator.platform || "",
+        language: navigator.language || "",
+        screen: screen.width + "×" + screen.height,
+        pixelRatio: window.devicePixelRatio || 1,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Bangkok",
+        vendor: navigator.vendor || ""
+      };
+    }
+    function explain(error) {
+      const code = String((error && error.code) || "");
+      const message = String((error && error.message) || "");
+      if (message === "ยกเลิก") return "";
+      if (/นานเกินไป|อัปโหลดรูป/.test(message)) return message;
+      if (/permission-denied|unauthorized|unauthenticated/.test(code)) return "Firebase ปฏิเสธการเขียน เปิด Firestore แล้ววางกฎจากปุ่มตั้งค่า";
+      if (/unavailable|network/.test(code)) return "เชื่อมต่อ Firebase ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองอีกครั้ง";
+      if (/not-found|NOT_FOUND/.test(code + message)) return "ยังไม่พบฐานข้อมูล Firestore";
+      if (/canceled|cancelled/.test(code)) return "";
+      return "บันทึกไม่สำเร็จ ลองอีกครั้ง";
+    }
+    function withTimeout(promise, ms, message) {
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(message)), ms);
+        Promise.resolve(promise).then((value) => { clearTimeout(timer); resolve(value); }, (error) => { clearTimeout(timer); reject(error); });
+      });
+    }
+    function mapSale(id, data) {
+      if (!data || !PAY[data.paymentMethod] || !data.dateKey || !data.productUrl) return null;
+      const device = data.device || {};
+      return {
+        id,
+        dateKey: data.dateKey,
+        recordedAt: data.recordedAt || "",
+        timeLabel: data.timeLabel || "",
+        paymentMethod: data.paymentMethod,
+        amount: typeof data.amount === "number" ? data.amount : null,
+        productUrl: data.productUrl,
+        productPath: data.productPath || "",
+        slipUrl: data.slipUrl || "",
+        slipPath: data.slipPath || "",
+        device: {
+          deviceId: String(device.deviceId || ""),
+          label: String(device.label || "ไม่ทราบอุปกรณ์"),
+          userAgent: String(device.userAgent || ""),
+          platform: String(device.platform || ""),
+          language: String(device.language || ""),
+          screen: String(device.screen || ""),
+          pixelRatio: typeof device.pixelRatio === "number" ? device.pixelRatio : 1,
+          timezone: String(device.timezone || ""),
+          vendor: String(device.vendor || "")
+        }
+      };
+    }
+    function sortRows(rows) {
+      return rows.sort((a, b) => a.recordedAt === b.recordedAt ? b.timeLabel.localeCompare(a.timeLabel) : (a.recordedAt < b.recordedAt ? 1 : -1));
+    }
+
+    function icon(name) {
+      const paths = {
+        store: '<path d="M3 9 5 4h14l2 5"/><path d="M4 9h16v11H4z"/><path d="M9 20v-6h6v6"/>',
+        check: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+        camera: '<path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3"/>',
+        image: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="1.5"/><path d="m21 16-5-4-9 7"/>',
+        cash: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+        qr: '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/>',
+        land: '<path d="M4 20h16"/><path d="M6 20V9l6-4 6 4v11"/><path d="M10 20v-5h4v5"/>',
+        back: '<path d="M15 5 8 12l7 7"/>',
+        left: '<path d="M15 5 8 12l7 7"/>',
+        right: '<path d="m9 5 7 7-7 7"/>',
+        cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>',
+        down: '<path d="M12 4v12"/><path d="m6 12 6 6 6-6"/>',
+        phone: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',
+        ok: '<path d="m5 13 4 4L19 7"/>'
+      };
+      return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths[name] + "</svg>";
+    }
+
+    function statsHtml(rows, ready) {
+      const s = summarize(rows);
+      const cell = (label, value) => '<div class="stat"><span>' + label + '</span><strong>' + (ready ? esc(value) : "…") + "</strong></div>";
+      return '<div class="grid2">' + cell("รายการ", String(s.count)) + cell("เงินสด", baht(s.cash)) + cell("สแกน", String(s.scan)) + cell("สแกนโครงการ", String(s.project)) + "</div>";
+    }
+    function banner(message) {
+      if (!message) return "";
+      return '<div class="warn"><p style="margin:0;font-weight:600">' + esc(message) + '</p><button type="button" class="link" data-action="help">วิธีเปิดฐานข้อมูล</button></div>';
+    }
+    function stepHead(kicker, title, hint) {
+      return '<button type="button" class="back" data-action="back">' + icon("back") + "ย้อนกลับ</button><p class=\"kicker\">" + esc(kicker) + "</p><h2>" + esc(title) + '</h2><p class="muted">' + esc(hint) + "</p>";
+    }
+    function photoBox(url, empty) {
+      if (url) return '<img class="preview" alt="ภาพที่เลือก" src="' + esc(url) + '">';
+      return '<div class="empty-photo"><div>' + icon("camera") + "<p>" + esc(empty) + "</p></div></div>";
+    }
+    function pickers() {
+      return '<div class="row2"><button type="button" class="btn btn-primary" data-action="camera" ' + (state.busyPhoto ? "disabled" : "") + ">" + icon("camera") + 'ถ่ายรูป</button><button type="button" class="btn btn-line" data-action="gallery" ' + (state.busyPhoto ? "disabled" : "") + ">" + icon("image") + "เลือกรูป</button></div>";
+    }
+
+    function renderSell() {
+      if (state.step === "home") {
+        const s = summarize(state.todayRows);
+        return banner(state.todayError) +
+          '<p class="kicker">' + esc(thaiDate(todayKey())) + '</p><h2 style="margin-top:0.25rem">ยอดวันนี้</h2><div style="height:1rem"></div>' +
+          statsHtml(state.todayRows, true) +
+          '<p class="muted" style="font-size:0.875rem">ขึ้นวันใหม่ รายการในหน้าตรวจเช็คจะเริ่มชุดของวันนั้น</p>' +
+          '<button type="button" class="btn btn-primary" data-action="start">เริ่มการขายใหม่</button>' +
+          '<label class="card field" style="margin-top:1rem"><span class="muted" style="font-size:0.875rem;font-weight:600">ชื่อเครื่องนี้</span><input id="device-label" maxlength="40" placeholder="' + esc(state.guess) + '" value="' + esc(state.label) + '"><span class="muted" style="display:block;margin-top:0.5rem;font-size:0.875rem;font-weight:400">เว้นว่างได้ ระบบจะบันทึกเป็น “' + esc(state.guess) + "” พร้อมเวลาและข้อมูลอุปกรณ์" + (state.deviceShort ? " · รหัส " + esc(state.deviceShort) : "") + "</span></label>" +
+          '<button type="button" class="link brand" style="margin-top:1rem" data-action="help">ตั้งค่า Firebase</button>';
+      }
+      if (state.step === "product") {
+        return stepHead("ขั้นตอนที่ 1 จาก 3", "ถ่ายภาพสินค้า", "ถ่ายสินค้าที่ขายให้เห็นชัด ก่อนเลือกวิธีจ่าย") +
+          photoBox(state.productUrl, state.busyPhoto ? "กำลังเตรียมรูป" : "ยังไม่มีรูปสินค้า") +
+          (state.photoError ? '<p class="err">' + esc(state.photoError) + "</p>" : "") +
+          pickers() +
+          '<button type="button" class="btn btn-primary" style="margin-top:0.75rem" data-action="next-product" ' + (!state.product || state.busyPhoto ? "disabled" : "") + ">ถัดไป</button>";
+      }
+      if (state.step === "pay") {
+        const choice = (action, tone, ic, title, hint) => '<button type="button" class="choice" data-action="' + action + '"><span class="ico ' + tone + '">' + icon(ic) + '</span><span><strong style="display:block;font-size:1.125rem">' + title + '</strong><span class="muted" style="font-size:0.875rem">' + hint + "</span></span></button>";
+        return stepHead("ขั้นตอนที่ 2 จาก 3", "ลูกค้าจ่ายแบบไหน", "เงินสดให้ใส่จำนวนที่รับมา สแกนหรือสแกนโครงการให้แนบสลิป") +
+          choice("pay-cash", "cash", "cash", "เงินสด", "ใส่จำนวนเงินที่ได้รับมา") +
+          choice("pay-scan", "brand", "qr", "สแกน", "แนบสลิปการสแกนจ่าย") +
+          choice("pay-project", "brand", "land", "สแกนโครงการ", "แนบสลิปของโครงการ");
+      }
+      if (state.step === "cash") {
+        const parsed = parseAmount(state.amount);
+        return '<form id="cash-form">' + stepHead("เงินสด", "จำนวนเงินที่ได้รับ", "ใส่ยอดที่รับจากลูกค้า เป็นบาท") +
+          '<div class="card center" style="padding:2rem 1rem"><input id="amount" class="amount" inputmode="decimal" maxlength="12" placeholder="0" value="' + esc(state.amount) + '" aria-label="จำนวนเงินที่ได้รับ"><p class="muted">บาท</p>' +
+          (state.amount && parsed === null ? '<p class="err">ใส่เป็นตัวเลขมากกว่า 0 เช่น 350 หรือ 350.50</p>' : "") +
+          (parsed !== null ? '<p style="font-weight:600;color:var(--cash)">รับเงิน ' + esc(baht(parsed)) + "</p>" : "") +
+          '</div><button type="button" id="amount-next" class="btn btn-primary" style="margin-top:1rem" data-action="next-cash" ' + (parsed === null ? "disabled" : "") + ">ถัดไป</button></form>";
+      }
+      if (state.step === "slip") {
+        return stepHead(PAY[state.method] || "สลิป", "แนบสลิป", "ถ่ายสลิปหรือเลือกจากคลังรูป แล้วค่อยบันทึก") +
+          photoBox(state.slipUrl, state.busyPhoto ? "กำลังเตรียมสลิป" : "ยังไม่มีสลิป") +
+          (state.photoError ? '<p class="err">' + esc(state.photoError) + "</p>" : "") +
+          pickers() +
+          '<button type="button" class="btn btn-primary" style="margin-top:0.75rem" data-action="next-slip" ' + (!state.slip || state.busyPhoto ? "disabled" : "") + ">ถัดไป</button>";
+      }
+      if (state.step === "review") {
+        const parsed = parseAmount(state.amount);
+        return stepHead("ขั้นตอนที่ 3 จาก 3", "ตรวจสอบก่อนบันทึก", "กดบันทึกแล้วระบบจะเก็บวันที่ เวลา และข้อมูลเครื่องนี้") +
+          (state.productUrl ? '<img class="preview" alt="รูปสินค้า" src="' + esc(state.productUrl) + '">' : "") +
+          '<div class="card"><p style="display:flex;justify-content:space-between"><span class="muted">วิธีจ่าย</span><strong>' + esc(PAY[state.method]) + "</strong></p>" +
+          (state.method === "cash" ? '<p style="display:flex;justify-content:space-between"><span class="muted">จำนวนที่รับ</span><strong>' + esc(baht(parsed || 0)) + "</strong></p>" : "") +
+          '<p style="display:flex;justify-content:space-between"><span class="muted">เครื่อง</span><strong>' + esc(state.label.trim() || state.guess) + "</strong></p></div>" +
+          (state.method !== "cash" && state.slipUrl ? '<img class="preview" alt="สลิป" src="' + esc(state.slipUrl) + '" style="margin-top:0.75rem">' : "") +
+          (state.saveError ? '<div style="margin-top:0.75rem">' + banner(state.saveError) + "</div>" : "") +
+          '<button type="button" class="btn btn-primary" style="margin-top:1rem" data-action="save">บันทึกการขาย</button>';
+      }
+      if (state.step === "saving") {
+        return '<div class="center" style="padding-top:4rem"><p class="kicker">กำลังบันทึก</p><h2 id="save-status" style="margin-top:0.5rem">' + esc(state.status || "กรุณารอสักครู่") + '</h2><p class="muted">ถ้าค้าง ระบบจะหยุดเองภายใน 25 วินาที</p><button type="button" class="btn btn-line" style="margin-top:1.5rem" data-action="cancel-save">ยกเลิก</button></div>';
+      }
+      if (state.step === "done" && state.saved) {
+        return '<div class="center"><div class="check">' + icon("ok") + '</div><h2 style="margin-top:1rem">บันทึกแล้ว</h2><p style="font-size:1.125rem;font-weight:600">' + esc(state.saved.time) + '</p><p class="muted">' + esc(thaiDate(state.saved.dateKey)) + "</p>" +
+          (state.saved.mediaOk ? "" : '<p class="err">รายการถูกบันทึกแล้ว แต่รูปใน PDF อาจไม่ขึ้น</p>') +
+          '<button type="button" class="btn btn-primary" style="margin-top:1.5rem" data-action="again">ขายรายการถัดไป</button>' +
+          '<button type="button" class="btn btn-line" style="margin-top:0.75rem" data-action="open-check">ดูในตรวจเช็ค</button></div>';
+      }
+      return "";
+    }
+
+    function renderCheck() {
+      const today = todayKey();
+      const open = state.dayRows.find((row) => row.id === state.openId);
+      return banner(state.dayError) +
+        '<div class="datebar"><button type="button" class="round" data-action="prev-day" aria-label="วันก่อนหน้า">' + icon("left") + '</button><div style="flex:1;min-width:0;text-align:center"><p class="kicker">' + (state.dateKey === today ? "วันนี้" : "เลือกวัน") + '</p><h2>' + esc(thaiDate(state.dateKey)) + '</h2></div><button type="button" class="round" data-action="next-day" aria-label="วันถัดไป" ' + (state.dateKey >= today ? "disabled" : "") + ">" + icon("right") + '</button><label class="round brand">' + icon("cal") + '<span class="sr">เลือกวันที่</span><input type="date" id="day-picker" max="' + today + '" value="' + esc(state.dateKey) + '"></label></div>' +
+        '<div style="height:1rem"></div>' + statsHtml(state.dayRows, state.dayReady) +
+        '<button type="button" class="btn btn-primary" style="margin:1rem 0" data-action="pdf" ' + (!state.dayReady || state.pdfStatus ? "disabled" : "") + ">" + icon("down") + "ดาวน์โหลด PDF แบบละเอียด</button>" +
+        (state.pdfError ? '<p class="err">' + esc(state.pdfError) + "</p>" : "") +
+        (!state.dayReady ? '<p class="muted">กำลังโหลดรายการ…</p>' : "") +
+        (state.dayReady && state.dayRows.length === 0 ? '<div class="card center"><strong>' + (state.dateKey === today ? "ยังไม่มีรายการในวันนี้" : "ยังไม่มีรายการในวันที่เลือก") + '</strong><p class="muted">เมื่อขึ้นวันใหม่ รายการของวันก่อนจะไม่ปนมากับวันปัจจุบัน</p></div>' : "") +
+        state.dayRows.map((sale) => '<button type="button" class="sale" data-action="open" data-id="' + esc(sale.id) + '"><img alt="" src="' + esc(sale.productUrl) + '"><span style="min-width:0;flex:1"><span style="display:flex;justify-content:space-between;gap:0.5rem"><strong>' + esc(sale.timeLabel) + '</strong><strong style="color:' + (sale.paymentMethod === "cash" ? "var(--cash)" : "var(--brand)") + '">' + esc(sale.paymentMethod === "cash" ? baht(sale.amount || 0) : PAY[sale.paymentMethod]) + '</strong></span><span class="muted" style="display:block;margin-top:0.25rem;font-size:0.875rem">' + esc((sale.paymentMethod === "cash" ? "เงินสด" : "มีสลิป") + " · " + sale.device.label) + "</span></span></button>").join("") +
+        (open ? detailHtml(open) : "") +
+        (state.pdfStatus ? '<div class="overlay"><div class="card"><p class="kicker">กำลังสร้างไฟล์</p><h2 id="pdf-status">' + esc(state.pdfStatus) + "</h2></div></div>" : "");
+    }
+
+    function detailHtml(sale) {
+      const rows = [
+        ["ชื่อเครื่อง", sale.device.label],
+        ["รหัสเครื่อง", sale.device.deviceId || "—"],
+        ["หน้าจอ", sale.device.screen || "—"],
+        ["ความละเอียดจอ", sale.device.pixelRatio + "x"],
+        ["แพลตฟอร์ม", sale.device.platform || "—"],
+        ["ภาษา", sale.device.language || "—"],
+        ["เขตเวลา", sale.device.timezone || "—"],
+        ["เบราว์เซอร์", sale.device.vendor || "—"]
+      ];
+      const cached = state.media[sale.id] || {};
+      const productSrc = cached.product || sale.productUrl;
+      const slipSrc = cached.slip || ((sale.slipUrl || "").indexOf("data:") === 0 || (sale.slipUrl || "").indexOf("http") === 0 ? sale.slipUrl : "");
+      return '<div class="sheet"><div class="panel"><div class="bar"><button type="button" class="round" data-action="close" aria-label="ปิด">' + icon("back") + '</button><h2>' + esc(sale.timeLabel) + '</h2></div><div class="body"><p class="kicker">' + esc(thaiDate(sale.dateKey)) + '</p><p class="muted">' + esc(sale.recordedAt ? thaiDateTime(sale.recordedAt) : sale.timeLabel) + '</p><img class="preview" alt="รูปสินค้า" src="' + esc(productSrc) + '"><div class="card"><p style="display:flex;justify-content:space-between"><span class="muted">วิธีจ่าย</span><strong>' + esc(PAY[sale.paymentMethod]) + "</strong></p>" +
+        (sale.paymentMethod === "cash" ? '<p style="display:flex;justify-content:space-between"><span class="muted">จำนวนที่รับ</span><strong style="color:var(--cash)">' + esc(baht(sale.amount || 0)) + "</strong></p>" : "") +
+        "</div>" + (slipSrc ? '<p style="font-weight:600">สลิป</p><img class="preview" alt="สลิป" src="' + esc(slipSrc) + '">' : "") +
+        '<div class="card" style="margin-top:1rem"><p style="display:flex;align-items:center;gap:0.4rem;font-weight:600">' + icon("phone") + 'อุปกรณ์ที่บันทึก</p>' +
+        rows.map(([label, value]) => '<p style="display:flex;justify-content:space-between;gap:0.75rem;font-size:0.875rem"><span class="muted">' + esc(label) + '</span><strong style="text-align:right;word-break:break-all">' + esc(value) + "</strong></p>").join("") +
+        (sale.device.userAgent ? '<p class="muted" style="font-size:0.75rem;word-break:break-all">' + esc(sale.device.userAgent) + "</p>" : "") +
+        "</div></div></div></div>";
+    }
+
+    function helpHtml() {
+      if (!state.help) return "";
+      return '<div class="sheet"><div class="panel"><div class="bar"><button type="button" class="round" data-action="close-help" aria-label="ปิด">' + icon("back") + '</button><h2>เชื่อม Firebase</h2></div><div class="body"><p class="muted">ใช้ Firestore อย่างเดียว ไม่ต้องเปิด Storage</p><ol><li>เปิด Firebase Console โปรเจกต์ checkinout-a06b6</li><li>สร้าง Firestore Database</li><li>วางกฎด้านล่างแล้วเผยแพร่</li></ol>' +
+        ruleBlock("กฎ Firestore", FIRESTORE_RULES, "copy-fire") +
+        '<p class="err">กฎนี้ยังไม่ล็อกผู้ใช้ ใครมีลิงก์แอปจะเห็นสลิปได้ อย่าส่งลิงก์ให้คนนอกร้าน</p></div></div></div>';
+    }
+    function ruleBlock(title, rules, action) {
+      return '<h3>' + title + '</h3><button type="button" class="btn btn-primary" style="height:2.5rem;font-size:0.875rem" data-action="' + action + '">คัดลอกกฎ</button><pre>' + esc(rules) + "</pre>";
+    }
+
+    function screenKey() {
+      return [state.tab, state.step, state.help ? "1" : "0", state.openId || "", state.dateKey, state.pdfStatus ? "1" : ""].join("|");
+    }
+    function render() {
+      const focus = document.activeElement && document.activeElement.id;
+      const nextKey = screenKey();
+      const animate = nextKey !== state.screenKey;
+      state.screenKey = nextKey;
+      const main = state.tab === "sell" ? renderSell() : renderCheck();
+      app.innerHTML = '<header><p>บันทึกขายหน้าร้าน</p><h1>สมุดขาย</h1></header><main class="' + (animate ? "fade" : "") + '">' + main + helpHtml() + '</main><nav><button type="button" data-action="tab-sell" ' + (state.tab === "sell" ? 'aria-current="page"' : "") + ">" + icon("store") + 'ขาย</button><button type="button" data-action="tab-check" ' + (state.tab === "check" ? 'aria-current="page"' : "") + ">" + icon("check") + "ตรวจเช็ค</button></nav>" +
+        '<input id="cam" class="sr" type="file" accept="image/*" capture="environment"><input id="gal" class="sr" type="file" accept="image/*">';
+      if (focus === "amount") {
+        const input = document.getElementById("amount");
+        if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+      }
+      if (focus === "device-label") {
+        const input = document.getElementById("device-label");
+        if (input) { input.focus(); const n = input.value.length; input.setSelectionRange(n, n); }
+      }
+    }
+
+    function resetDraft() {
+      if (state.productUrl) URL.revokeObjectURL(state.productUrl);
+      if (state.slipUrl) URL.revokeObjectURL(state.slipUrl);
+      state.product = null; state.productUrl = "";
+      state.slip = null; state.slipUrl = "";
+      state.method = null; state.amount = "";
+      state.photoError = ""; state.saveError = ""; state.saved = null; state.status = "";
+    }
+    function goBack() {
+      const map = { product: "home", pay: "product", cash: "pay", slip: "pay", review: state.method === "cash" ? "cash" : "slip" };
+      state.photoError = "";
+      state.step = map[state.step] || "home";
+      render();
+    }
+
+    function blobOf(canvas, quality) {
+      return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("ใช้รูปนี้ไม่ได้")), "image/jpeg", quality));
+    }
+    async function draw(source, width, height) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(source, 0, 0, width, height);
+      let quality = 0.72;
+      let blob = await blobOf(canvas, quality);
+      while (blob.size > 220000 && quality > 0.42) {
+        quality -= 0.08;
+        blob = await blobOf(canvas, quality);
+      }
+      return blob;
+    }
+    async function compress(file) {
+      if (file.size > 25000000) throw new Error("รูปใหญ่เกินไป");
+      const bitmap = await createImageBitmap(file).catch(() => { throw new Error("ใช้รูป JPG หรือ PNG"); });
+      try {
+        const scale = Math.min(1, 1280 / Math.max(bitmap.width, bitmap.height));
+        return await draw(bitmap, Math.max(1, Math.round(bitmap.width * scale)), Math.max(1, Math.round(bitmap.height * scale)));
+      } finally { bitmap.close(); }
+    }
+    function toBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function makeThumb(blob) {
+      const bitmap = await createImageBitmap(blob);
+      try {
+        const scale = Math.min(1, 480 / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        let quality = 0.62;
+        let small = await blobOf(canvas, quality);
+        while (small.size > 48000 && quality > 0.35) {
+          quality -= 0.08;
+          small = await blobOf(canvas, quality);
+        }
+        return "data:image/jpeg;base64," + await toBase64(small);
+      } finally { bitmap.close(); }
+    }
+
+    async function saveSale() {
+      if (!state.product || !state.method) return;
+      const amount = state.method === "cash" ? parseAmount(state.amount) : null;
+      if (state.method === "cash" && amount === null) return;
+      if (state.method !== "cash" && !state.slip) return;
+      if (!db) {
+        state.saveError = "โหลด Firebase ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วเปิดหน้านี้ใหม่";
+        state.step = "review";
+        render();
+        return;
+      }
+      const run = ++saveRun;
+      state.step = "saving";
+      state.status = "กำลังเตรียมรูป";
+      state.saveError = "";
+      render();
+      try {
+        const when = parts();
+        const id = db.collection("sales").doc().id;
+        const productJpeg = await toBase64(state.product);
+        const slipJpeg = state.slip ? await toBase64(state.slip) : null;
+        if (run !== saveRun) return;
+        if (productJpeg.length + (slipJpeg ? slipJpeg.length : 0) > 900000) {
+          throw new Error("รูปใหญ่เกินไป ถ่ายใหม่ให้ใกล้ขึ้นแล้วลองอีกครั้ง");
+        }
+        const productUrl = await makeThumb(state.product);
+        const slipUrl = state.slip ? await makeThumb(state.slip) : "";
+        if (run !== saveRun) return;
+        state.status = "กำลังบันทึกข้อมูล";
+        const statusNode = document.getElementById("save-status");
+        if (statusNode) statusNode.textContent = state.status;
+        await withTimeout(db.collection("saleMedia").doc(id).set({ productJpeg, slipJpeg }), 20000, "บันทึกรูปนานเกินไป ตรวจอินเทอร์เน็ตแล้วลองอีกครั้ง");
+        if (run !== saveRun) return;
+        const payload = {
+          dateKey: when.dateKey,
+          recordedAt: new Date().toISOString(),
+          timeLabel: when.timeLabel,
+          paymentMethod: state.method,
+          amount: state.method === "cash" ? amount : null,
+          productUrl,
+          productPath: "",
+          slipUrl,
+          slipPath: "",
+          device: deviceInfo(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        await withTimeout(db.collection("sales").doc(id).set(payload), 20000, "บันทึกข้อมูลนานเกินไป ตรวจอินเทอร์เน็ตแล้วลองอีกครั้ง");
+        if (run !== saveRun) return;
+        state.media[id] = {
+          product: "data:image/jpeg;base64," + productJpeg,
+          slip: slipJpeg ? "data:image/jpeg;base64," + slipJpeg : ""
+        };
+        state.saved = { time: when.timeLabel, dateKey: when.dateKey, mediaOk: true };
+        state.step = "done";
+        render();
+      } catch (error) {
+        if (run !== saveRun) return;
+        state.step = "review";
+        state.saveError = explain(error);
+        render();
+      }
+    }
+
+    function bindLists() {
+      if (unsubToday) unsubToday();
+      if (unsubDay) unsubDay();
+      unsubToday = db.collection("sales").where("dateKey", "==", todayKey()).onSnapshot((snap) => {
+        state.todayRows = sortRows(snap.docs.map((doc) => mapSale(doc.id, doc.data())).filter(Boolean));
+        state.todayError = "";
+        if (state.tab === "sell" && state.step === "home" && document.activeElement?.id !== "device-label") render();
+      }, (error) => {
+        state.todayError = explain(error) || "โหลดยอดวันนี้ไม่สำเร็จ";
+        if (state.tab === "sell" && state.step === "home") render();
+      });
+      watchDay();
+    }
+    function watchDay() {
+      if (unsubDay) unsubDay();
+      state.dayReady = false;
+      unsubDay = db.collection("sales").where("dateKey", "==", state.dateKey).onSnapshot((snap) => {
+        state.dayRows = sortRows(snap.docs.map((doc) => mapSale(doc.id, doc.data())).filter(Boolean));
+        state.dayError = "";
+        state.dayReady = true;
+        if (state.tab === "check" && !state.pdfStatus) render();
+      }, (error) => {
+        state.dayRows = [];
+        state.dayReady = true;
+        state.dayError = explain(error) || "โหลดรายการไม่สำเร็จ";
+        if (state.tab === "check") render();
+      });
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        if (document.querySelector('script[src="' + src + '"]')) { resolve(); return; }
+        const tag = document.createElement("script");
+        tag.src = src;
+        tag.onload = () => resolve();
+        tag.onerror = () => reject(new Error("โหลดตัวสร้าง PDF ไม่สำเร็จ"));
+        document.head.appendChild(tag);
+      });
+    }
+    function el(tag, style, text) {
+      const node = document.createElement(tag);
+      Object.assign(node.style, style);
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+    async function loadMedia(id) {
+      if (!db || state.media[id]) return;
+      try {
+        const snap = await db.collection("saleMedia").doc(id).get();
+        const data = snap.data() || {};
+        if (!data.productJpeg && !data.slipJpeg) return;
+        state.media[id] = {
+          product: data.productJpeg ? "data:image/jpeg;base64," + data.productJpeg : "",
+          slip: data.slipJpeg ? "data:image/jpeg;base64," + data.slipJpeg : ""
+        };
+        if (state.openId === id && state.tab === "check" && !state.pdfStatus) render();
+      } catch (e) { /* รายการเก่ายังดูรูปย่อได้ */ }
+    }
+    async function downloadPdf() {
+      state.pdfError = "";
+      state.pdfStatus = "กำลังเตรียม PDF";
+      render();
+      try {
+        await loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");
+        await loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js");
+        const rows = state.dayRows.slice().sort((a, b) => a.timeLabel.localeCompare(b.timeLabel) || a.recordedAt.localeCompare(b.recordedAt));
+        const images = {};
+        for (const sale of rows) {
+          state.pdfStatus = "กำลังโหลดรูป";
+          const node = document.getElementById("pdf-status");
+          if (node) node.textContent = state.pdfStatus;
+          let product = null;
+          let slip = null;
+          try {
+            const media = await withTimeout(db.collection("saleMedia").doc(sale.id).get(), 8000, "skip");
+            const data = media.data() || {};
+            if (data.productJpeg) product = "data:image/jpeg;base64," + data.productJpeg;
+            if (data.slipJpeg) slip = "data:image/jpeg;base64," + data.slipJpeg;
+          } catch (e) { /* fall through */ }
+          if (!product && String(sale.productUrl).indexOf("data:") === 0) product = sale.productUrl;
+          if (!slip && String(sale.slipUrl || "").indexOf("data:") === 0) slip = sale.slipUrl;
+          images[sale.id] = { product, slip };
+        }
+        if (document.fonts && document.fonts.ready) await document.fonts.ready;
+        const pages = [coverPage(rows)].concat(rows.map((sale, index) => salePage(sale, images[sale.id], index + 1, rows.length, index + 2, rows.length + 1)));
+        const host = document.createElement("div");
+        host.setAttribute("aria-hidden", "true");
+        Object.assign(host.style, { position: "fixed", left: "0", top: "0", zIndex: "40", pointerEvents: "none" });
+        document.body.appendChild(host);
+        const JsPDF = window.jspdf.jsPDF;
+        const pdf = new JsPDF({ unit: "mm", format: "a4", compress: true });
+        try {
+          for (let i = 0; i < pages.length; i += 1) {
+            state.pdfStatus = "กำลังสร้างหน้า " + (i + 1) + " จาก " + pages.length;
+            const node = document.getElementById("pdf-status");
+            if (node) node.textContent = state.pdfStatus;
+            host.replaceChildren(pages[i]);
+            const canvas = await window.html2canvas(pages[i], { scale: 2, backgroundColor: "#fffdf9", useCORS: true, logging: false });
+            const data = canvas.toDataURL("image/jpeg", 0.82);
+            if (i > 0) pdf.addPage();
+            pdf.addImage(data, "JPEG", 0, 0, 210, 297);
+          }
+        } finally { host.remove(); }
+        pdf.save("สมุดขาย-" + state.dateKey + ".pdf");
+        state.pdfStatus = "";
+        render();
+      } catch (error) {
+        state.pdfStatus = "";
+        state.pdfError = explain(error) || "สร้าง PDF ไม่สำเร็จ";
+        render();
+      }
+    }
+    function pageShell() {
+      const page = el("section", { width: "794px", height: "1123px", boxSizing: "border-box", background: "#fffdf9", color: "#1c1915", fontFamily: '"Sarabun", sans-serif', position: "relative", overflow: "hidden" });
+      page.append(el("div", { height: "12px", background: "#0e6b52" }));
+      return page;
+    }
+    function coverPage(rows) {
+      const page = pageShell();
+      const body = el("div", { padding: "36px 44px" });
+      body.append(el("div", { fontSize: "14px", fontWeight: "600", color: "#0e6b52" }, "รายงานการขายแบบละเอียด"));
+      body.append(el("h1", { fontSize: "40px", margin: "8px 0 0" }, "สมุดขาย"));
+      body.append(el("p", { fontSize: "20px", fontWeight: "600" }, thaiDate(state.dateKey)));
+      const now = parts();
+      body.append(el("p", { fontSize: "14px", color: "#6f675e" }, "สร้างไฟล์เมื่อ " + thaiDate(now.dateKey) + " เวลา " + now.timeLabel));
+      const s = summarize(rows);
+      const grid = el("div", { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "18px" });
+      [["จำนวนรายการ", String(s.count)], ["ยอดเงินสด", baht(s.cash)], ["สแกน", String(s.scan)], ["สแกนโครงการ", String(s.project)]].forEach(([label, value]) => {
+        const cell = el("div", { border: "1px solid #e3d9cc", borderRadius: "14px", padding: "14px 16px" });
+        cell.append(el("div", { fontSize: "13px", color: "#6f675e" }, label));
+        cell.append(el("div", { fontSize: "26px", fontWeight: "700", marginTop: "4px" }, value));
+        grid.append(cell);
+      });
+      body.append(grid);
+      body.append(el("p", { fontSize: "14px", color: "#6f675e", marginTop: "22px", lineHeight: "1.55" }, rows.length ? "หน้ารายการเรียงตามเวลาที่กดบันทึก แต่ละรายการมีรูป วิธีจ่าย เวลา และอุปกรณ์" : "วันนี้ยังไม่มีรายการขาย"));
+      page.append(body);
+      const foot = el("div", { position: "absolute", left: "40px", right: "40px", bottom: "28px", display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#6f675e" });
+      foot.append(el("span", {}, "สมุดขาย · เวลาประเทศไทย"));
+      foot.append(el("span", {}, "หน้า 1 / " + (rows.length + 1)));
+      page.append(foot);
+      return page;
+    }
+    function salePage(sale, media, index, total, pageNo, pageCount) {
+      const page = pageShell();
+      const band = el("div", { background: "#0e6b52", color: "#f3fbf7", padding: "18px 44px" });
+      band.append(el("div", { fontSize: "13px", fontWeight: "600" }, thaiDate(sale.dateKey) + " · รายการ " + index + " จาก " + total));
+      band.append(el("div", { fontSize: "28px", fontWeight: "700" }, sale.timeLabel));
+      page.append(band);
+      const body = el("div", { padding: "22px 44px 70px" });
+      const field = (label, value) => {
+        const row = el("div", { display: "flex", justifyContent: "space-between", gap: "16px", fontSize: "16px", marginTop: "6px" });
+        row.append(el("span", { color: "#6f675e" }, label));
+        row.append(el("span", { fontWeight: "600" }, value));
+        body.append(row);
+      };
+      field("วิธีจ่าย", PAY[sale.paymentMethod]);
+      field("จำนวนเงิน", sale.paymentMethod === "cash" ? baht(sale.amount || 0) : "—");
+      field("บันทึกเมื่อ", sale.recordedAt ? thaiDateTime(sale.recordedAt) : sale.timeLabel);
+      field("เครื่อง", sale.device.label);
+      field("รหัสเครื่อง", sale.device.deviceId || "—");
+      field("หน้าจอ", sale.device.screen || "—");
+      field("เขตเวลา", sale.device.timezone || "—");
+      const photo = (title, src, maxHeight) => {
+        body.append(el("div", { marginTop: "14px", fontSize: "13px", fontWeight: "600", color: "#6f675e" }, title));
+        if (!src) {
+          body.append(el("div", { border: "1px dashed #e3d9cc", borderRadius: "12px", padding: "12px", color: "#6f675e", fontSize: "14px" }, "ไม่มีรูปในไฟล์นี้"));
+          return;
+        }
+        const img = document.createElement("img");
+        img.alt = title;
+        img.src = src;
+        Object.assign(img.style, { width: "100%", maxHeight, objectFit: "contain", background: "#f3eee6", borderRadius: "12px", display: "block" });
+        body.append(img);
+      };
+      const hasSlip = sale.paymentMethod !== "cash";
+      photo("รูปสินค้า", media && media.product, hasSlip ? "220px" : "340px");
+      if (hasSlip) photo("สลิป", media && media.slip, "220px");
+      page.append(body);
+      const foot = el("div", { position: "absolute", left: "40px", right: "40px", bottom: "28px", fontSize: "12px", color: "#6f675e" }, "หน้า " + pageNo + " / " + pageCount);
+      page.append(foot);
+      return page;
+    }
+
+    async function take(file, kind) {
+      state.busyPhoto = true;
+      state.photoError = "";
+      render();
+      try {
+        const blob = await compress(file);
+        const url = URL.createObjectURL(blob);
+        if (kind === "product") {
+          if (state.productUrl) URL.revokeObjectURL(state.productUrl);
+          state.product = blob; state.productUrl = url;
+        } else {
+          if (state.slipUrl) URL.revokeObjectURL(state.slipUrl);
+          state.slip = blob; state.slipUrl = url;
+        }
+      } catch (error) {
+        state.photoError = error.message || "ใช้รูปนี้ไม่ได้";
+      } finally {
+        state.busyPhoto = false;
+        render();
+      }
+    }
+
+    app.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-action]");
+      if (!button || button.disabled) return;
+      const action = button.dataset.action;
+      if (action === "tab-sell") { state.tab = "sell"; render(); }
+      if (action === "tab-check") { state.tab = "check"; render(); }
+      if (action === "help") { state.help = true; render(); }
+      if (action === "close-help" || action === "close") { state.help = false; state.openId = null; render(); }
+      if (action === "start") { resetDraft(); state.step = "product"; render(); }
+      if (action === "back") goBack();
+      if (action === "camera") document.getElementById("cam").click();
+      if (action === "gallery") document.getElementById("gal").click();
+      if (action === "next-product") { state.step = "pay"; state.photoError = ""; render(); }
+      if (action === "pay-cash") { state.method = "cash"; state.step = "cash"; render(); }
+      if (action === "pay-scan") { state.method = "scan"; state.step = "slip"; render(); }
+      if (action === "pay-project") { state.method = "project"; state.step = "slip"; render(); }
+      if (action === "next-slip") { state.step = "review"; state.photoError = ""; render(); }
+      if (action === "next-cash" && parseAmount(state.amount) !== null) { state.step = "review"; render(); }
+      if (action === "save") saveSale();
+      if (action === "cancel-save") { saveRun += 1; state.step = "review"; state.saveError = ""; render(); }
+      if (action === "again") { resetDraft(); state.step = "product"; render(); }
+      if (action === "open-check") { state.dateKey = todayKey(); state.tab = "check"; state.step = "home"; watchDay(); render(); }
+      if (action === "prev-day") { state.dateKey = addDays(state.dateKey, -1); state.openId = null; watchDay(); render(); }
+      if (action === "next-day" && state.dateKey < todayKey()) { state.dateKey = addDays(state.dateKey, 1); state.openId = null; watchDay(); render(); }
+      if (action === "open") { state.openId = button.dataset.id; render(); loadMedia(button.dataset.id); }
+      if (action === "pdf") downloadPdf();
+      if (action === "copy-fire") {
+        navigator.clipboard.writeText(FIRESTORE_RULES).then(() => { button.textContent = "คัดลอกแล้ว"; });
+      }
+    });
+    app.addEventListener("change", (event) => {
+      if (event.target.id === "cam" || event.target.id === "gal") {
+        const file = event.target.files && event.target.files[0];
+        event.target.value = "";
+        if (file) take(file, state.step === "slip" ? "slip" : "product");
+      }
+      if (event.target.id === "day-picker" && event.target.value) {
+        state.dateKey = event.target.value;
+        state.openId = null;
+        watchDay();
+        render();
+      }
+    });
+    app.addEventListener("input", (event) => {
+      if (event.target.id === "device-label") {
+        state.label = event.target.value;
+        writeLabel(event.target.value);
+      }
+      if (event.target.id === "amount") {
+        state.amount = event.target.value;
+        const parsed = parseAmount(state.amount);
+        const card = event.target.parentElement;
+        const old = card.querySelector(".live");
+        if (old) old.remove();
+        const note = document.createElement("p");
+        note.className = "live";
+        if (state.amount && parsed === null) {
+          note.className += " err";
+          note.textContent = "ใส่เป็นตัวเลขมากกว่า 0 เช่น 350 หรือ 350.50";
+          card.appendChild(note);
+        } else if (parsed !== null) {
+          note.style.fontWeight = "600";
+          note.style.color = "var(--cash)";
+          note.textContent = "รับเงิน " + baht(parsed);
+          card.appendChild(note);
+        }
+        const next = document.getElementById("amount-next");
+        if (next) next.disabled = parsed === null;
+      }
+    });
+    app.addEventListener("submit", (event) => {
+      if (event.target.id === "cash-form") {
+        event.preventDefault();
+        if (parseAmount(state.amount) !== null) { state.step = "review"; render(); }
+      }
+    });
+
+    const profile = readProfile();
+    state.label = profile.label;
+    state.deviceShort = profile.id.slice(0, 8);
+    state.guess = guessDevice();
+    render();
+    if (window.firebase) {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      bindLists();
+    } else {
+      state.todayError = "โหลด Firebase ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วเปิดหน้านี้ใหม่";
+      state.dayError = state.todayError;
+      state.dayReady = true;
+      render();
+    }
+    setInterval(() => {
+      const next = todayKey();
+      if (next !== state._today) {
+        state._today = next;
+        if (db) bindLists();
+        else if (state.tab === "sell" && state.step === "home") render();
+      }
+    }, 30000);
+    state._today = todayKey();
+  </script>
+</body>
+</html>
